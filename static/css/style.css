@@ -1,0 +1,96 @@
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f0f2f5;
+    margin: 0;
+}
+
+.container {
+    width: 350px;
+    margin: 80px auto;
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+h1, h2 {
+    color: #007BFF;
+    margin-bottom: 20px;
+}
+
+form input[type="text"],
+form input[type="email"],
+form input[type="password"],
+form input[type="number"],
+form button {
+    width: 90%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+form button {
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+form button:hover {
+    background-color: #1e7e34;
+}
+
+p {
+    margin-top: 20px;
+}
+
+a {
+    color: #007BFF;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.header {
+    background-color: #007BFF;
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+}
+
+.pdf-button {
+    display: inline-block;
+    padding: 12px 20px;
+    background-color: #ffc107;
+    color: #333;
+    text-decoration: none;
+    border-radius: 6px;
+    margin-top: 20px;
+}
+
+.pdf-button:hover {
+    background-color: #e0a800;
+}
+
+.log-entry {
+    background: #f9f9f9;
+    padding: 12px;
+    border-left: 5px solid #007BFF;
+    margin-bottom: 12px;
+    border-radius: 6px;
+}
+
+.logout {
+    margin-top: 30px;
+    text-align: center;
+}
+.logout a {
+    color: #dc3545;
+}
+.logout a:hover {
+    text-decoration: underline;
+}
