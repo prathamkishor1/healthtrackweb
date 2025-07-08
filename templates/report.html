@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <title>Health Report</title>
+    <style>
+        h2 { text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid black; padding: 10px; text-align: center; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h2>HealthTrack Web — Health Report</h2>
+    <p>User: {{ user_name }}</p>
+    <table>
+        <tr>
+            <th>Date</th>
+            <th>Temperature (°C)</th>
+            <th>Blood Pressure</th>
+            <th>SpO2 (%)</th>
+            <th>Sugar (mg/dL)</th>
+        </tr>
+        {% for log in logs %}
+        <tr>
+            <td>{{ log[2] }}</td>
+            <td>{{ log[3] }}</td>
+            <td>{{ log[4] }}</td>
+            <td>{{ log[5] }}</td>
+            <td>{{ log[6] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
