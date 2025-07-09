@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Send Message to {{ patient_name }}</title>
+</head>
+<body>
+  <h2>📩 Message for {{ patient_name }}</h2>
+  <form action="/send_message/{{ patient_id }}" method="post">
+    <textarea name="message" rows="5" cols="50" required placeholder="Type your message here..."></textarea><br>
+    <button type="submit">Send Message</button>
+  </form>
+  <a href="/doctor_dashboard">⬅️ Back to Dashboard</a>
+</body>
+</html>

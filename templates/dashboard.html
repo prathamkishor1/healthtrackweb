@@ -149,6 +149,29 @@
     <button type="submit">➕ Add Log</button>
   </form>
 
+  <h2>📨 Messages from Doctor</h2>
+
+{% if messages %}
+  {% for msg in messages %}
+    <div class="log-entry">
+      📅 <strong>{{ msg[1] }}</strong> |
+      {% if msg[4] == 'doctor' %}
+        👨‍⚕️ <strong>{{ msg[2] }}</strong>
+      {% else %}
+        🙋‍♂️ <strong>You</strong>
+      {% endif %}
+      |
+      💬 {{ msg[0] }}
+      {% if msg[5] %}
+        <a href="/delete_message/{{ msg[5] }}">❌</a>
+      {% endif %}
+    </div>
+  {% endfor %}
+{% else %}
+  <p>No messages yet.</p>
+{% endif %}
+
+
   <div class="btn-bar">
     <a href="/generate_pdf" class="btn pdf">📑 Download PDF</a>
     <a href="/download_csv" class="btn csv">📥 Download CSV</a>

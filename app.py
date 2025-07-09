@@ -62,6 +62,16 @@ def dashboard():
     cursor.execute("SELECT AVG(temperature), AVG(spo2), AVG(sugar_level) FROM health_logs WHERE user_id=%s", (user_id,))
     averages = cursor.fetchone()
 
+    # Fetch messages for the logged-in patient
+    cursor.execute("""
+        SELECT m.message, m.sent_at, d.name
+        FROM messages m
+        JOIN doctors d ON m.sender_doctor_id = d.id
+        WHERE m.receiver_patient_id = %s
+        ORDER BY m.sent_at DESC
+    """, (user_id,))
+    messages = cursor.fetchall()
+
     suggestions = []
     if logs:
         latest_log = logs[0]
@@ -81,7 +91,8 @@ def dashboard():
         if sugar < 70:
             suggestions.append("🍬 Low blood sugar. Have a quick snack or fruit juice.")
 
-    return render_template('dashboard.html', logs=logs, data=logs, user_name=user_name, averages=averages, suggestions=suggestions)
+    return render_template('dashboard.html', logs=logs, data=logs, user_name=user_name, averages=averages, suggestions=suggestions, messages=messages)
+
 
 @app.route('/add_log', methods=['POST'])
 def add_log():
@@ -112,6 +123,34 @@ def add_log():
 
     return redirect('/dashboard')
 
+@app.route('/send_patient_message/<int:doctor_id>', methods=['POST'])
+def send_patient_message(doctor_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+
+    message_text = request.form['message']
+    patient_id = session['user_id']
+
+    cursor.execute("""
+        INSERT INTO messages (sender_doctor_id, receiver_patient_id, message, sender_type)
+        VALUES (%s, %s, %s, %s)
+    """, (doctor_id, patient_id, message_text, 'patient'))
+    db.commit()
+
+    flash("✅ Message sent to your doctor.")
+    return redirect('/dashboard')
+
+@app.route('/delete_message/<int:message_id>')
+def delete_message(message_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+
+    cursor.execute("DELETE FROM messages WHERE id=%s AND receiver_patient_id=%s", (message_id, session['user_id']))
+    db.commit()
+    flash("✅ Message deleted.")
+    return redirect('/dashboard')
+
+
 @app.route('/assign_doctor', methods=['GET', 'POST'])
 def assign_doctor():
     if 'user_id' not in session:
@@ -137,6 +176,25 @@ def assign_doctor():
     cursor.execute("SELECT id, name FROM doctors")
     doctors = cursor.fetchall()
     return render_template('assign_doctor.html', doctors=doctors)
+
+@app.route('/messages')
+def view_messages():
+    if 'user_id' not in session:
+        return redirect('/login')
+
+    user_id = session['user_id']
+
+    cursor.execute("""
+        SELECT m.message, m.sent_at, d.name
+        FROM messages m
+        JOIN doctors d ON m.sender_doctor_id = d.id
+        WHERE m.receiver_patient_id = %s
+        ORDER BY m.sent_at DESC
+    """, (user_id,))
+    messages = cursor.fetchall()
+
+    return render_template('messages.html', messages=messages)
+
 
 
 @app.route('/delete_log/<int:log_id>')
@@ -209,6 +267,25 @@ def logout():
 
 # -------------------- DOCTOR PORTAL ROUTES --------------------
 
+@app.route('/message_center/<int:patient_id>')
+def message_center(patient_id):
+    if 'doctor_id' not in session and 'user_id' != patient_id:
+        return redirect('/')
+
+    # Fetch messages between this patient and assigned doctor
+    cursor.execute("""
+        SELECT id, sender_type, message, sent_at FROM messages
+        WHERE receiver_patient_id = %s
+        ORDER BY sent_at ASC
+    """, (patient_id,))
+    messages = cursor.fetchall()
+
+    # Fetch patient name
+    cursor.execute("SELECT name FROM users WHERE id=%s", (patient_id,))
+    patient_name = cursor.fetchone()[0]
+
+    return render_template('message_center.html', messages=messages, patient_id=patient_id, patient_name=patient_name)
+
 
 # Doctor Registration
 @app.route('/doctor_register', methods=['GET', 'POST'])
@@ -274,6 +351,60 @@ def view_patient(patient_id):
     patient_name = cursor.fetchone()[0]
 
     return render_template('view_patient.html', logs=logs, patient_name=patient_name)
+
+@app.route('/send_message/<int:patient_id>', methods=['POST'])
+def send_message(patient_id):
+    if 'doctor_id' not in session:
+        return redirect('/doctor_login')
+
+    message_text = request.form.get('message_content')
+    if not message_text:
+        flash("⚠️ Message cannot be empty.")
+        return redirect('/doctor_dashboard')
+
+    doctor_id = session['doctor_id']
+
+    cursor.execute("""
+        INSERT INTO messages (sender_doctor_id, receiver_patient_id, message)
+        VALUES (%s, %s, %s)
+    """, (doctor_id, patient_id, message_text))
+    db.commit()
+
+    flash("✅ Message sent to patient.")
+    return redirect('/doctor_dashboard')
+
+
+@app.route('/message/<int:patient_id>')
+def message_form(patient_id):
+    if 'doctor_id' not in session:
+        return redirect('/doctor_login')
+
+    cursor.execute("SELECT name FROM users WHERE id=%s", (patient_id,))
+    patient = cursor.fetchone()
+
+    if not patient:
+        return "Patient not found."
+
+    return render_template('messages.html', patient_id=patient_id, patient_name=patient[0])
+
+@app.route('/delete_message_center/<int:message_id>/<int:patient_id>')
+def delete_message_center(message_id, patient_id):
+    if 'doctor_id' not in session and 'user_id' not in session:
+        return redirect('/')
+
+    sender_type = 'doctor' if 'doctor_id' in session else 'patient'
+    sender_id_field = 'sender_doctor_id' if sender_type == 'doctor' else 'receiver_patient_id'
+    sender_id_value = session.get('doctor_id') if 'doctor_id' in session else session.get('user_id')
+
+    cursor.execute(f"""
+        DELETE FROM messages
+        WHERE id=%s AND sender_type=%s AND {sender_id_field}=%s
+    """, (message_id, sender_type, sender_id_value))
+    db.commit()
+
+    flash("✅ Message deleted.")
+    return redirect(f'/message_center/{patient_id}')
+
 
 @app.route('/remove_patient/<int:patient_id>')
 def remove_patient(patient_id):
