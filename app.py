@@ -43,6 +43,7 @@ def login():
     user = cursor.fetchone()
     if user:
         session['user_id'] = user[0]
+        session['user_type'] = 'patient'
         return redirect('/dashboard')
     else:
         return "Invalid credentials!"
@@ -62,15 +63,24 @@ def dashboard():
     cursor.execute("SELECT AVG(temperature), AVG(spo2), AVG(sugar_level) FROM health_logs WHERE user_id=%s", (user_id,))
     averages = cursor.fetchone()
 
-    # Fetch messages for the logged-in patient
     cursor.execute("""
-        SELECT m.message, m.sent_at, d.name
+        SELECT m.id, m.message, m.sent_at, 
+               IF(m.sender_type = 'doctor', d.name, u.name) AS sender_name, 
+               m.sender_type, m.receiver_patient_id, m.sender_doctor_id
         FROM messages m
-        JOIN doctors d ON m.sender_doctor_id = d.id
-        WHERE m.receiver_patient_id = %s
+        LEFT JOIN doctors d ON m.sender_doctor_id = d.id
+        LEFT JOIN users u ON m.receiver_patient_id = u.id
+        WHERE m.receiver_patient_id = %s OR (m.sender_type = 'patient' AND m.receiver_patient_id = %s)
         ORDER BY m.sent_at DESC
-    """, (user_id,))
+    """, (user_id, user_id))
     messages = cursor.fetchall()
+
+    # Fetch assigned doctor ID if any
+    cursor.execute("SELECT doctor_id FROM patient_doctor WHERE patient_id=%s", (user_id,))
+    doctor_assignment = cursor.fetchone()
+    assigned_doctor = doctor_assignment[0] if doctor_assignment else None
+
+    session['assigned_doctor'] = assigned_doctor
 
     suggestions = []
     if logs:
@@ -91,8 +101,9 @@ def dashboard():
         if sugar < 70:
             suggestions.append("🍬 Low blood sugar. Have a quick snack or fruit juice.")
 
-    return render_template('dashboard.html', logs=logs, data=logs, user_name=user_name, averages=averages, suggestions=suggestions, messages=messages)
-
+    return render_template('dashboard.html', logs=logs, data=logs, user_name=user_name,
+                           averages=averages, suggestions=suggestions, messages=messages,
+                           assigned_doctor=assigned_doctor)
 
 @app.route('/add_log', methods=['POST'])
 def add_log():
@@ -123,29 +134,51 @@ def add_log():
 
     return redirect('/dashboard')
 
-@app.route('/send_patient_message/<int:doctor_id>', methods=['POST'])
-def send_patient_message(doctor_id):
+@app.route('/send_patient_message', methods=['POST'])
+def send_patient_message():
     if 'user_id' not in session:
         return redirect('/login')
 
-    message_text = request.form['message']
     patient_id = session['user_id']
+    message_text = request.form['message']
+
+    cursor.execute("SELECT doctor_id FROM patient_doctor WHERE patient_id=%s", (patient_id,))
+    assignment = cursor.fetchone()
+
+    if not assignment:
+        flash("❌ No doctor assigned yet. Assign one to start messaging.")
+        return redirect('/dashboard')
+
+    doctor_id = assignment[0]
 
     cursor.execute("""
         INSERT INTO messages (sender_doctor_id, receiver_patient_id, message, sender_type)
-        VALUES (%s, %s, %s, %s)
-    """, (doctor_id, patient_id, message_text, 'patient'))
+        VALUES (%s, %s, %s, 'patient')
+    """, (doctor_id, patient_id, message_text))
     db.commit()
 
     flash("✅ Message sent to your doctor.")
     return redirect('/dashboard')
 
+# ✅ Updated delete_message route
 @app.route('/delete_message/<int:message_id>')
 def delete_message(message_id):
     if 'user_id' not in session:
         return redirect('/login')
 
-    cursor.execute("DELETE FROM messages WHERE id=%s AND receiver_patient_id=%s", (message_id, session['user_id']))
+    user_id = session['user_id']
+
+    cursor.execute("""
+        SELECT id FROM messages 
+        WHERE id=%s AND (receiver_patient_id=%s OR (sender_type='patient' AND receiver_patient_id=%s))
+    """, (message_id, user_id, user_id))
+    message = cursor.fetchone()
+
+    if not message:
+        flash("❌ Unauthorized or message not found.")
+        return redirect('/dashboard')
+
+    cursor.execute("DELETE FROM messages WHERE id=%s", (message_id,))
     db.commit()
     flash("✅ Message deleted.")
     return redirect('/dashboard')
@@ -167,8 +200,10 @@ def assign_doctor():
             return redirect('/dashboard')
 
         # Assign doctor
+        # Assign doctor
         cursor.execute("INSERT INTO patient_doctor (doctor_id, patient_id) VALUES (%s, %s)", (doctor_id, patient_id))
         db.commit()
+        session['assigned_doctor'] = doctor_id
         flash("✅ Doctor assigned successfully.")
         return redirect('/dashboard')
 

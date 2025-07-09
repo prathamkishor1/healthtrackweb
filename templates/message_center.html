@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Messages — {{ patient_name }}</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; margin: 0; }
+    .header {
+      background: #007BFF; color: #fff;
+      padding: 20px; text-align: center;
+    }
+    .container {
+      max-width: 800px; margin: 30px auto;
+      background: #fff; padding: 30px;
+      border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.08);
+    }
+    h2 { color: #007BFF; margin-bottom: 20px; }
+    .message {
+      background: #f8f9fa;
+      padding: 14px;
+      border-left: 4px solid #007BFF;
+      margin: 10px 0;
+      border-radius: 6px;
+    }
+    .message strong { color: #007BFF; }
+    .btn {
+      display: inline-block;
+      padding: 10px 18px;
+      border-radius: 6px;
+      background: #28a745;
+      color: #fff;
+      text-decoration: none;
+      margin: 10px 0;
+    }
+    .btn:hover { background: #218838; }
+    .delete-btn {
+      float: right;
+      color: #dc3545;
+      text-decoration: none;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📨 Messages with {{ patient_name }}</h1>
+</div>
+
+<div class="container">
+  <a href="/doctor_dashboard" class="btn">⬅️ Back to Dashboard</a>
+
+  <h2>Conversation</h2>
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="message">
+        <strong>{{ msg[1].capitalize() }}:</strong> {{ msg[2] }}
+        <br><small>📅 {{ msg[3] }}</small>
+        <a href="/delete_message_center/{{ msg[0] }}/{{ patient_id }}" class="delete-btn">❌</a>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>No messages yet.</p>
+  {% endif %}
+</div>
+
+</body>
+</html>

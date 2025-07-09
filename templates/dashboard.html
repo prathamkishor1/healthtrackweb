@@ -54,7 +54,6 @@
     .btn.clear:hover { background: #5a6268; }
     .btn.logout { background: #dc3545; }
     .btn.logout:hover { background: #c82333; }
-
     .log-entry {
       background: #f8f9fa;
       padding: 10px 12px;
@@ -149,28 +148,36 @@
     <button type="submit">➕ Add Log</button>
   </form>
 
-  <h2>📨 Messages from Doctor</h2>
+  <h2>📨 Messages</h2>
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="log-entry">
+        📅 <strong>{{ msg[2] }}</strong> |
+        {% if msg[4] == 'doctor' %}
+          👨‍⚕️ <strong>{{ msg[3] }}</strong>
+        {% else %}
+          🙋‍♂️ <strong>You</strong>
+        {% endif %}
+        | 💬 {{ msg[1] }}
+        <a href="/delete_message/{{ msg[0] }}">❌</a>
 
-{% if messages %}
-  {% for msg in messages %}
-    <div class="log-entry">
-      📅 <strong>{{ msg[1] }}</strong> |
-      {% if msg[4] == 'doctor' %}
-        👨‍⚕️ <strong>{{ msg[2] }}</strong>
-      {% else %}
-        🙋‍♂️ <strong>You</strong>
-      {% endif %}
-      |
-      💬 {{ msg[0] }}
-      {% if msg[5] %}
-        <a href="/delete_message/{{ msg[5] }}">❌</a>
-      {% endif %}
-    </div>
-  {% endfor %}
-{% else %}
-  <p>No messages yet.</p>
-{% endif %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>No messages yet.</p>
+  {% endif %}
 
+  {% if assigned_doctor %}
+ <form action="/send_patient_message" method="post" style="margin-top:20px;">
+  <input type="hidden" name="doctor_id" value="{{ assigned_doctor }}">
+  <textarea name="message" placeholder="Type your message to your doctor..." required
+            style="width:100%;height:100px;padding:10px;border:1px solid #ccc;border-radius:6px;"></textarea>
+  <button type="submit" style="margin-top:10px;">📨 Send to Doctor</button>
+</form>
+
+  {% else %}
+    <p style="margin-top:15px;color:#888;">No doctor assigned yet. Assign one to start messaging.</p>
+  {% endif %}
 
   <div class="btn-bar">
     <a href="/generate_pdf" class="btn pdf">📑 Download PDF</a>
@@ -200,7 +207,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <script>
   const logData = {{ data|tojson }};
   const dates = logData.map(item => item[2]);

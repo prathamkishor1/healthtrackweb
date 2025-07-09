@@ -71,15 +71,14 @@
 
   {% for patient in patients %}
   <div class="patient-log">
-    👤 <strong>{{ patient[1] }}</strong> 
+    👤 <strong>{{ patient[1] }}</strong>
     <a href="/view_patient/{{ patient[0] }}" class="btn" style="background:#007bff">📖 View Logs</a>
     <a href="mailto:{{ patient[2] }}" class="btn" style="background:#17a2b8">✉️ Contact</a>
     <a href="/message/{{ patient[0] }}" class="btn" style="background:#ffc107; color:#212529">📩 Message</a>
+    <a href="/message_center/{{ patient[0] }}" class="btn" style="background:#6f42c1">💬 View Messages</a>
     <a href="/remove_patient/{{ patient[0] }}" class="btn" style="background:#dc3545">❌ Remove</a>
-
   </div>
-{% endfor %}
-
+  {% endfor %}
 
   <a href="/doctor_logout" class="btn logout">🔒 Logout</a>
 </div>
