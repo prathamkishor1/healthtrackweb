@@ -14,17 +14,16 @@ app.config['SECRET_KEY'] = 'your_secret_key'
 db = mysql.connector.connect(**DB_CONFIG)
 cursor = db.cursor()
 
-# Landing Page Route (Project Intro)
+# -------------------- USER ROUTES --------------------
+
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# Login Page Route
 @app.route('/login')
 def login_page():
     return render_template('login.html')
 
-# Registration Page Route
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -36,7 +35,6 @@ def register():
         return redirect('/login')
     return render_template('register.html')
 
-# Login Logic Route (POST)
 @app.route('/login', methods=['POST'])
 def login():
     email = request.form['email']
@@ -49,7 +47,6 @@ def login():
     else:
         return "Invalid credentials!"
 
-# Dashboard Route with AI Suggestions
 @app.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
@@ -86,7 +83,6 @@ def dashboard():
 
     return render_template('dashboard.html', logs=logs, data=logs, user_name=user_name, averages=averages, suggestions=suggestions)
 
-# Add Health Log with AI alerts
 @app.route('/add_log', methods=['POST'])
 def add_log():
     user_id = session['user_id']
@@ -116,7 +112,33 @@ def add_log():
 
     return redirect('/dashboard')
 
-# Delete Individual Log
+@app.route('/assign_doctor', methods=['GET', 'POST'])
+def assign_doctor():
+    if 'user_id' not in session:
+        return redirect('/login')
+
+    if request.method == 'POST':
+        doctor_id = request.form['doctor_id']
+        patient_id = session['user_id']
+
+        # Check if already assigned
+        cursor.execute("SELECT * FROM patient_doctor WHERE patient_id=%s", (patient_id,))
+        if cursor.fetchone():
+            flash("❌ You’ve already assigned a doctor.")
+            return redirect('/dashboard')
+
+        # Assign doctor
+        cursor.execute("INSERT INTO patient_doctor (doctor_id, patient_id) VALUES (%s, %s)", (doctor_id, patient_id))
+        db.commit()
+        flash("✅ Doctor assigned successfully.")
+        return redirect('/dashboard')
+
+    # Fetch doctors
+    cursor.execute("SELECT id, name FROM doctors")
+    doctors = cursor.fetchall()
+    return render_template('assign_doctor.html', doctors=doctors)
+
+
 @app.route('/delete_log/<int:log_id>')
 def delete_log(log_id):
     if 'user_id' not in session:
@@ -126,7 +148,6 @@ def delete_log(log_id):
     flash("✅ Health log deleted successfully.")
     return redirect('/dashboard')
 
-# Clear All Logs for user
 @app.route('/clear_logs')
 def clear_logs():
     if 'user_id' not in session:
@@ -136,7 +157,6 @@ def clear_logs():
     flash("✅ All logs cleared successfully.")
     return redirect('/dashboard')
 
-# Generate PDF Report
 @app.route('/generate_pdf')
 def generate_pdf():
     if 'user_id' not in session:
@@ -158,7 +178,6 @@ def generate_pdf():
 
     return send_file(pdf_path, as_attachment=True)
 
-# Download CSV Report
 @app.route('/download_csv')
 def download_csv():
     if 'user_id' not in session:
@@ -183,12 +202,105 @@ def download_csv():
     response.headers['Content-Disposition'] = 'attachment; filename=health_logs.csv'
     return response
 
-# Logout Route
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect('/')
 
-# Run App
+# -------------------- DOCTOR PORTAL ROUTES --------------------
+
+
+# Doctor Registration
+@app.route('/doctor_register', methods=['GET', 'POST'])
+def doctor_register():
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        password = request.form['password']
+        cursor.execute("INSERT INTO doctors (name, email, password) VALUES (%s, %s, %s)", (name, email, password))
+        db.commit()
+        return redirect('/doctor_login')
+    return render_template('doctor_register.html')
+
+# Doctor Login
+@app.route('/doctor_login', methods=['GET', 'POST'])
+def doctor_login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        cursor.execute("SELECT * FROM doctors WHERE email=%s AND password=%s", (email, password))
+        doctor = cursor.fetchone()
+        if doctor:
+            session['doctor_id'] = doctor[0]
+            return redirect('/doctor_dashboard')
+        else:
+            return "Invalid credentials!"
+    return render_template('doctor_login.html')
+
+# Doctor Dashboard
+@app.route('/doctor_dashboard')
+@app.route('/doctor_dashboard')
+def doctor_dashboard():
+    if 'doctor_id' not in session:
+        return redirect('/doctor_login')
+
+    doctor_id = session['doctor_id']
+
+    cursor.execute("SELECT name FROM doctors WHERE id=%s", (doctor_id,))
+    doctor_name = cursor.fetchone()[0]
+
+    # Fetch patients assigned to this doctor
+    cursor.execute("""
+        SELECT users.id, users.name, users.email
+        FROM users
+        JOIN patient_doctor ON users.id = patient_doctor.patient_id
+        WHERE patient_doctor.doctor_id = %s
+    """, (doctor_id,))
+    patients = cursor.fetchall()
+
+    return render_template('doctor_dashboard.html', doctor_name=doctor_name, patients=patients)
+
+
+# View individual patient logs
+@app.route('/view_patient/<int:patient_id>')
+def view_patient(patient_id):
+    if 'doctor_id' not in session:
+        return redirect('/doctor_login')
+
+    cursor.execute("SELECT * FROM health_logs WHERE user_id=%s ORDER BY date DESC", (patient_id,))
+    logs = cursor.fetchall()
+
+    cursor.execute("SELECT name FROM users WHERE id=%s", (patient_id,))
+    patient_name = cursor.fetchone()[0]
+
+    return render_template('view_patient.html', logs=logs, patient_name=patient_name)
+
+@app.route('/remove_patient/<int:patient_id>')
+def remove_patient(patient_id):
+    if 'doctor_id' not in session:
+        return redirect('/doctor_login')
+    
+    doctor_id = session['doctor_id']
+
+    # Remove patient-doctor assignment
+    cursor.execute("""
+        DELETE FROM patient_doctor 
+        WHERE doctor_id=%s AND patient_id=%s
+    """, (doctor_id, patient_id))
+    db.commit()
+
+    flash("✅ Patient removed successfully.")
+    return redirect('/doctor_dashboard')
+
+
+# Doctor Logout
+@app.route('/doctor_logout')
+def doctor_logout():
+    session.pop('doctor_id', None)
+    flash("👋 Doctor logged out successfully.")
+    return redirect('/')
+
+# ------------------------------------------------------------
+
 if __name__ == '__main__':
     app.run(debug=True)

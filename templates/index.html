@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    
     <meta charset="UTF-8">
     <title>HealthTrack Web — Your Health Companion</title>
     <style>
@@ -50,6 +49,14 @@
         .btn.secondary:hover {
             background: #138496;
         }
+        .btn.doctor {
+            background: #ffc107;
+            color: #212529;
+        }
+        .btn.doctor:hover {
+            background: #e0a800;
+            color: #212529;
+        }
         .about {
             max-width: 850px;
             margin: 40px auto;
@@ -89,20 +96,23 @@
 </div>
 
 <div class="buttons">
-    <a href="/register" class="btn">📝 Register</a>
-    <a href="\login" class="btn secondary">🔐 Login</a>
+    <a href="/register" class="btn">📝 User Register</a>
+    <a href="/login" class="btn secondary">🔐 User Login</a>
+    <a href="/doctor_register" class="btn doctor">🩺 Doctor Register</a>
+    <a href="/doctor_login" class="btn doctor">👨‍⚕️ Doctor Login</a>
 </div>
 
 <div class="about">
     <h2>📖 About This Project</h2>
-    <p>HealthTrack Web is an intuitive health log monitoring platform where users can easily track daily health metrics like temperature, blood pressure, SpO2, and sugar levels. It provides health trend charts, AI-based anomaly alerts, PDF/CSV reports, and smart health suggestions to help you stay in control of your well-being.</p>
+    <p>HealthTrack Web is an intuitive health log monitoring platform where users can track their daily health metrics like temperature, blood pressure, SpO2, and sugar levels. It offers AI-based anomaly alerts, trend charts, downloadable PDF/CSV reports, and smart health suggestions to help users stay on top of their well-being.</p>
+    <p>Newly added — a <strong>Doctor's Portal</strong> that enables medical professionals to securely view and track the health records of their patients in real time, enhancing remote patient care and monitoring efficiency.</p>
 
     <h3>👥 Contributors:</h3>
     <div class="contributor">
         <strong>• Pratham Kishor</strong> — Frontend Developer & Backend Integration  
     </div>
     <div class="contributor">
-    // <strong>• Swasti Jain</strong> — Database Design & Backend Developer
+        <strong>• Swasti Jain</strong> — Database Design & Backend Developer  
     </div>
 </div>
 

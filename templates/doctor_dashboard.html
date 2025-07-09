@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Doctor Dashboard | HealthTrack Web</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+        }
+        .header {
+            background-color: #28a745;
+            color: #fff;
+            padding: 22px;
+            text-align: center;
+        }
+        .container {
+            max-width: 950px;
+            margin: 30px auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 12px rgba(0,0,0,0.08);
+        }
+        h2 {
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+        .patient-log {
+            background: #f8f9fa;
+            padding: 14px 18px;
+            border-left: 4px solid #28a745;
+            margin: 12px 0;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+        .btn {
+            padding: 12px 20px;
+            font-weight: 600;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #fff;
+            border: none;
+            display: inline-block;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            margin-right: 12px;
+        }
+        .btn.logout {
+            background: #dc3545;
+        }
+        .btn.logout:hover {
+            background: #c82333;
+        }
+        .btn.view {
+            background: #007bff;
+        }
+        .btn.view:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Welcome, Dr. {{ doctor_name }} 👨‍⚕️ — HealthTrack Dashboard</h1>
+</div>
+
+<div class="container">
+  <h2>👥 Assigned Patients</h2>
+
+  {% for patient in patients %}
+  <div class="patient-log">
+    👤 <strong>{{ patient[1] }}</strong> 
+    <a href="/view_patient/{{ patient[0] }}" class="btn" style="background:#007bff">📖 View Logs</a>
+    <a href="mailto:{{ patient[2] }}" class="btn" style="background:#17a2b8">✉️ Contact</a>
+    <a href="/remove_patient/{{ patient[0] }}" class="btn" style="background:#dc3545">❌ Remove</a>
+
+  </div>
+{% endfor %}
+
+
+  <a href="/doctor_logout" class="btn logout">🔒 Logout</a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Patient Logs | HealthTrack Web</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+        }
+
+        .header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 22px;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: 30px auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 12px rgba(0,0,0,0.08);
+        }
+
+        h2 {
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+
+        .log-entry {
+            background: #f8f9fa;
+            padding: 14px 18px;
+            border-left: 4px solid #007bff;
+            margin: 12px 0;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            font-weight: 600;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #fff;
+            background: #6c757d;
+            display: inline-block;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            margin-right: 12px;
+        }
+
+        .btn:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>📝 Logs for {{ patient_name }}</h1>
+</div>
+
+<div class="container">
+    <h2>📖 Health Logs</h2>
+
+    {% if logs %}
+        {% for log in logs %}
+        <div class="log-entry">
+            📅 <strong>{{ log[2] }}</strong> |
+            🌡️ {{ log[3] }}°C |
+            💓 {{ log[4] }} BP |
+            🫁 {{ log[5] }}% |
+            🍭 {{ log[6] }} mg/dL
+            {% if log[7] %} | 📝 {{ log[7] }} {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>No health logs available for this patient.</p>
+    {% endif %}
+
+    <a href="/doctor_dashboard" class="btn">⬅️ Back to Dashboard</a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Assign Doctor | HealthTrack Web</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; margin: 0; }
+    .container { max-width: 600px; margin: 50px auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 0 12px rgba(0,0,0,0.08); }
+    h2 { color: #007BFF; }
+    form { margin-top: 20px; }
+    select, button { padding: 10px; width: 100%; margin: 10px 0; border-radius: 6px; border: 1px solid #ccc; }
+    button { background: #28a745; color: #fff; border: none; cursor: pointer; }
+    button:hover { background: #218838; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>🩺 Assign Doctor</h2>
+  <form action="/assign_doctor" method="post">
+    <label>Select Doctor:</label>
+    <select name="doctor_id" required>
+      {% for doc in doctors %}
+        <option value="{{ doc[0] }}">{{ doc[1] }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit">Assign Doctor</button>
+  </form>
+</div>
+
+</body>
+</html>
